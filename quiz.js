@@ -1,5 +1,6 @@
-const questions = [
-  {
+  //問題を定義
+  const questions=[
+    {
       question: "Windowsでコピーするショートカットキーは？",
       choices: ["Ctrl+C", "Ctrl+X", "Ctrl+V", "Ctrl+P"],
       correct: "Ctrl+C"
@@ -103,119 +104,139 @@ const questions = [
   // 20個のクイズデータを追加
 ];
 
-let currentQuestionIndex = 0;
-let correctAnswers = 0;
-let questionsToAsk = [];
+   //問題questionsの中からランダムに3問
+   //ランダムに選んだ問題を格納する配列
+    let quiz = [];
+    //ランダムに選んだ問題のインデックスを格納する配列
+    let quizIndex = [];
+    //shuffle関数
+    function shuffle(arr){
+      let i = arr.length;
+      while(i){
+        let j = Math.floor(Math.random()*i);
+        let t = arr[--i];
+        arr[i] = arr[j];
+        arr[j] = t;
+      }
+      return arr;
+    }
 
-function initializeQuiz() {
-  shuffleQuestions();
-  questionsToAsk = questions.slice(0, 5);
+
+    ///ボタンを非表示
+    //document.getElementById("submmitbtn").style.display="none";
+    document.getElementById("nextbtn").style.display="none";
+    document.getElementById("resetbtn").style.display="none";
+
+    //quizの問題を表示
+    //現在の問題のインデックス
+    let currentQuestionIndex = 0;
+    //正解数
+    let numCorrect = 0;
+    //問題をシャッフル
+    shuffle(questions);
+
+    quizIndex = [];
+    quiz = shuffle(questions.slice(0,3)); // 元の問題をシャッフルして再設定
+    //HTML要素を取得
+    const questionElement = document.getElementById("question");
+    const choicesElement = document.getElementById("choices");
+
+    //問題を表示する関数
+    function displayQuestion() {
+      const currentQuestion = quiz[currentQuestionIndex];
+      questionElement.textContent = currentQuestion.question;
+      
+      //選択肢を表示
+      choicesElement.innerHTML = "";
+      currentQuestion.choices.forEach((choice, index) => {
+        const choiceButton = document.createElement("button");
+        choiceButton.textContent = choice;
+        choiceButton.setAttribute("data-index", index);
+        choiceButton.addEventListener("click", handleChoiceClick);
+        choicesElement.appendChild(choiceButton);
+      });
+    }
+
+    //クイズの結果を表示する関数
+  function displayResult() {
+    const resultElement = document.getElementById("result");
+
+    
+    resultElement.textContent = `クイズ終了！正解数: ${numCorrect} / ${quiz.length}`;
+    
+    // リセットボタンを表示
+    document.getElementById("resetbtn").style.display = "block";
+    // 回答ボタンを非表示に
+    //document.getElementById("submmitbtn").style.display = "none";
+    // 次の問題へボタンを非表示に
+    document.getElementById("nextbtn").style.display = "none";
+  }
+
+    //選択肢をクリックした際の処理
+    function handleChoiceClick(event) {
+      const selectedChoiceIndex = event.target.getAttribute("data-index");
+      const currentQuestion = quiz[currentQuestionIndex];
+
+      //選択が正解かどうかをチェック
+      if (currentQuestion.choices[selectedChoiceIndex] === currentQuestion.correct) {
+        //正解の場合
+        document.getElementById("answer").textContent = "正解！";
+        numCorrect++;
+      } else {
+        //不正解の場合
+        document.getElementById("answer").textContent = `不正解！正解は${currentQuestion.correct}です！`
+      }
+
+
+      //次の問題へボタンを表示
+      document.getElementById("nextbtn").style.display = "block";
+      //選択肢のボタンを無効化
+      const choiceButtons = choicesElement.querySelectorAll("button");
+      choiceButtons.forEach((button) => {
+        button.removeEventListener("click", handleChoiceClick);
+      });
+    }
+
+    //次の問題へボタンをクリックした際の処理
+    document.getElementById("nextbtn").addEventListener("click", () => {
+      //現在の問題のインデックスをインクリメント
+      currentQuestionIndex++;
+      //次の問題が存在するかチェック
+      if (currentQuestionIndex < quiz.length) {
+        //次の問題を表示
+        displayQuestion();
+        //回答と次の問題へボタンをクリア
+        document.getElementById("answer").textContent = "";
+        document.getElementById("nextbtn").style.display = "none";
+        //選択肢のボタンを有効化
+        const choiceButtons = choicesElement.querySelectorAll("button");
+        choiceButtons.forEach((button) => {
+          button.addEventListener("click", handleChoiceClick);
+        });
+      } else {
+        //クイズが終了した場合、結果を表示
+        displayResult();
+      }
+    });
+
+    //リセットボタンをクリックした際の処理
+document.getElementById("resetbtn").addEventListener("click", () => {
+  // クイズの問題の状態をリセット
   currentQuestionIndex = 0;
-  correctAnswers = 0;
-
+  numCorrect = 0;
+  quizIndex = [];
+  shuffle(questions);
+  quiz = shuffle(questions.slice(0,3)); // 元の問題をシャッフルして再設定
+  
+  // 結果とリセットボタンを非表示に
+  document.getElementById("answer").textContent = "";
+  document.getElementById("result").textContent = "";
+  document.getElementById("resetbtn").style.display = "none";
+  // 最初の問題を表示
   displayQuestion();
-}
-function shuffleQuestions() {
-  for (let i = questions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [questions[i], questions[j]] = [questions[j], questions[i]];
-  }
-}
-function displayQuestion() {
-  const questionDiv = document.getElementById("question");
-  const choicesDiv = document.getElementById("choices");
-  const answerDiv = document.getElementById("answer");
-  const resultDiv = document.getElementById("result");
-  const submitButton = document.getElementById("submitButton");
-  const nextButton = document.getElementById("nextButton");
-  const restartButton = document.getElementById("restartButton");
 
-  if (currentQuestionIndex < questionsToAsk.length) {
-    questionDiv.textContent = questionsToAsk[currentQuestionIndex].question;
-
-  // 選択肢を表示
-  restartButton.style.display = "none";
-  resultDiv.textContent = "";
-  choicesDiv.innerHTML = "";
-  questions[currentQuestionIndex].choices.forEach((choice) => {
-    const choiceButton = document.createElement("button");
-    choiceButton.textContent = choice;
-    choiceButton.addEventListener("click", () => selectChoice(choice,currentQuestionIndex)); // 選択肢を選ぶとselectChoiceが呼ばれる
-    choicesDiv.appendChild(choiceButton);
-  });
-
-  // 回答と次の問題ボタンを非表示に
-  answerDiv.textContent = "";
-  resultDiv.textContent = "";
-  submitButton.style.display = "none";
-  nextButton.style.display = "none";
-  restartButton.style.display = "none";
-  }else{
-    //displayResult();
-  }
-}
-
-function selectChoice(selectedChoice,currentQuestionIndex) {
-  const submitButton = document.getElementById("submitButton");
-  submitButton.addEventListener("click", () => checkAnswer(selectedChoice,currentQuestionIndex)); // 回答ボタンをクリックするとcheckAnswerが呼ばれる
-  submitButton.style.display = "block"; // 回答ボタンを表示
-  
-  console.log(currentQuestionIndex);
-}
-
-function checkAnswer(selectedChoice,currentQuestionIndex) {
-  const correctAnswer = questions[currentQuestionIndex].correct;
-  const answerDiv = document.getElementById("answer");
-  const nextButton = document.getElementById("nextButton");
-
-  if (selectedChoice === correctAnswer) {
-    answerDiv.textContent = "正解！";
-    correctAnswers++;
-  } else {
-    answerDiv.textContent = "不正解。正解は " + correctAnswer + " です。";
-  }
-
-  // 回答ボタンを非表示に
-  const submitButton = document.getElementById("submitButton");
-  submitButton.style.display = "none";
-
-  // 次の問題ボタンを表示
-  if (currentQuestionIndex < questionsToAsk.length) {
-  nextButton.style.display = "block";
-  } else {
-    //displayResult();
-  }
-}
-
-function displayResult(resultDiv) {
-  resultDiv = document.getElementById("result");
-  resultDiv.textContent = "クイズ終了！ 正解数: " + correctAnswers + " / " + questionsToAsk.length;
-  //currentQuestionIndex = 0;
-  //correctAnswers=0;
-  questionsToAsk = [];
-  nextButton.style.display = "none"
-  restartButton.style.display = "block"
-}
-
-// 次の問題ボタンのクリックイベント
-document.getElementById("nextButton").addEventListener("click", () => {
-  
-console.log(currentQuestionIndex);
-console.log(questionsToAsk.length);
-  if (currentQuestionIndex < questionsToAsk.length-1) {
-    currentQuestionIndex++;
-    displayQuestion(); // 次の質問を表示
-  } else {
-    displayResult(); // 結果を表示
-  }
 });
 
-// 最初から始めるボタンのクリックイベント
-document.getElementById("restartButton").addEventListener("click", () => {
-  //currentQuestionIndex = 0;
-  //correctAnswers = 0;
-  initializeQuiz(); // クイズを初期化して再開始
-});
 
-// クイズを初期化して開始
-initializeQuiz();
+    //最初の問題を表示
+    displayQuestion();
